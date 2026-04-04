@@ -61,3 +61,31 @@ Short_FM9090Audio_Mono_BW = obw(Short_FM9090Audio_Mono,Common_Fs);
 
 disp(['Short_BBCAudio_Mono bandwidth is:', num2str(Short_BBCAudio_Mono_BW),' Hz']);
 disp(['Short_FM9090Audio_Mono bandwidth is:', num2str(Short_FM9090Audio_Mono_BW),' Hz']);
+
+%% Part II -- AM Modulator
+
+%%%% Fix the Sampling Rate Problem
+
+Interpolation_Factor = 10;
+Common_Fs_After_Interpolation = Common_Fs * Interpolation_Factor;
+Short_BBCAudio_Interp = interp(Short_BBCAudio_Mono,Interpolation_Factor);
+Short_FM9090Audio_Interp = interp(Short_FM9090Audio_Mono,Interpolation_Factor);
+
+%%%% Set the time variable after interpolation
+
+Common_Length_Interp = length(Short_BBCAudio_Interp);
+t = (0 : Common_Length_Interp - 1)'*(1/Common_Fs_After_Interpolation);
+
+%%%% Carrier Generatrion part
+
+Fc_BBCAudio = 100000;
+Fc_FM9090Audio = 130000;
+Carrier_BBCAudio = cos(2*pi*Fc_BBCAudio*t);
+Carrier_FM9090Audio = cos(2*pi*Fc_FM9090Audio*t);
+
+%%%% DSB-SC Modulation
+
+Modulated_BBCAudio = Short_BBCAudio_Interp .* Carrier_BBCAudio;
+Modulated_FM9090Audio = Short_FM9090Audio_Interp .* Carrier_FM9090Audio;
+
+disp('AM Modulation Phase Finished');
