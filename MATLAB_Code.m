@@ -1,4 +1,5 @@
 clear,clc,close all;
+load handel.mat
 
 %% Part I -- Getting files inside the program
 
@@ -81,8 +82,8 @@ t = (0 : Common_Length_Interp - 1)'*(1/Common_Fs_After_Interpolation);
 
 Fc_BBCAudio = 100000;
 Fc_FM9090Audio = 130000;
-Carrier_BBCAudio = cos(2*pi*Fc_BBCAudio*t);
-Carrier_FM9090Audio = cos(2*pi*Fc_FM9090Audio*t);
+Carrier_BBCAudio = 2*cos(2*pi*Fc_BBCAudio*t);
+Carrier_FM9090Audio = 2*cos(2*pi*Fc_FM9090Audio*t);
 
 %%%% DSB-SC Modulation
 
@@ -98,7 +99,7 @@ FDM_Signal_Rx = Modulated_FM9090Audio + Modulated_BBCAudio;
 F_RF_low = 85000;
 F_RF_high = 115000;
 %%%% Sharpness of the filter 
-Filter_Order = 10;
+Filter_Order = 8;
 %%%% filter Design 
 RF_Filter_Spec = fdesign.bandpass('N,F3dB1,F3dB2', Filter_Order, F_RF_low, F_RF_high, Common_Fs_After_Interpolation);
 RF_Filter = design(RF_Filter_Spec, 'butter');
@@ -117,8 +118,8 @@ ylabel('Magnitude');
 %% Part V -- Mixer Stage
 
 F_IF = 15000;
-F_Oscillator = Fc_BBCAudio + F_IF;
-Oscillator_Signal = cos(2*pi*F_Oscillator*t);
+F_Oscillator = Fc_BBCAudio - F_IF;
+Oscillator_Signal = 2*cos(2*pi*F_Oscillator*t);
 Mixed_Signal = RF_Filtered_Signal .* Oscillator_Signal;
 
 %% Part VI -- IF Stage
@@ -127,7 +128,7 @@ Mixed_Signal = RF_Filtered_Signal .* Oscillator_Signal;
 F_IF_low = 500;
 F_IF_high = 30000;
 %%%% Sharpness of the filter 
-Filter_Order = 10;
+Filter_Order = 8;
 %%%% filter Design 
 IF_Filter_Spec = fdesign.bandpass('N,F3dB1,F3dB2', Filter_Order, F_IF_low, F_IF_high, Common_Fs_After_Interpolation);
 IF_Filter = design(IF_Filter_Spec, 'butter');
@@ -141,3 +142,39 @@ plot(f,abs(IF_Filtered_Signal_FFT));
 title('Frequency Spectrum of IF filtered Signal');
 xlabel('Frequency (Hz)');
 ylabel('Magnitude');
+
+%% Part VII -- Baseband Detection
+
+Oscillator_Signal = 2*cos(2*pi*F_IF*t);
+Mixed_Baseband_Signal = IF_Filtered_Signal .* Oscillator_Signal;
+%%%% LPF
+F_Baseband_Cutoff = 6000; 
+LPF_Order = 8; 
+LPF_Spec = fdesign.lowpass('N,F3dB', LPF_Order, F_Baseband_Cutoff, Common_Fs_After_Interpolation);
+LPF_Filter = design(LPF_Spec, 'butter');
+Final_Audio_High_Fs = filter(LPF_Filter, Mixed_Baseband_Signal);
+%%%% Ploting the result
+Final_Audio_High_Fs_FFT = fftshift(fft(Final_Audio_High_Fs));
+Final_Audio_High_Fs_Length = length(Final_Audio_High_Fs);
+f = (-Final_Audio_High_Fs_Length/2 : Final_Audio_High_Fs_Length/2 - 1) * (Common_Fs_After_Interpolation/ Final_Audio_High_Fs_Length);
+figure(4)
+plot(f,abs(Final_Audio_High_Fs_FFT));
+title('Frequency Spectrum of Final Audio (BBCArabic)');
+xlabel('Frequency (Hz)');
+ylabel('Magnitude');
+%%%% Downsampling
+Final_Audio = downsample(Final_Audio_High_Fs, Interpolation_Factor);
+%%%% Ploting the result
+Final_Audio_FFT = fftshift(fft(Final_Audio));
+Final_Audio_Length = length(Final_Audio);
+f = (-Final_Audio_Length/2 : Final_Audio_Length/2 - 1) * (Common_Fs/ Final_Audio_Length);
+figure(5)
+plot(f,abs(Final_Audio_FFT));
+title('Frequency Spectrum of Final Audio (BBCArabic) Default Sample Rate');
+xlabel('Frequency (Hz)');
+ylabel('Magnitude');
+%%%% Sound && Save the 
+sound(Final_Audio,Common_Fs);
+filename = 'BBCArabic_All_Stages.wav';
+audiowrite(filename,Final_Audio,Common_Fs);
+clear y Fs
