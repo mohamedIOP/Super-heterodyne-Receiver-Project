@@ -174,6 +174,7 @@ title('Frequency Spectrum of Final Audio (BBCArabic) Default Sample Rate');
 xlabel('Frequency (Hz)');
 ylabel('Magnitude');
 %%%% Sound && Save the 
+Final_Audio = Final_Audio * 2;
 sound(Final_Audio,Common_Fs);
 filename = 'BBCArabic_All_Stages.wav';
 audiowrite(filename,Final_Audio,Common_Fs);
