@@ -113,3 +113,11 @@ plot(f,abs(RF_Filtered_Signal_FFT));
 title('Frequency Spectrum of RF filtered Signal');
 xlabel('Frequency (Hz)');
 ylabel('Magnitude');
+
+%% Part V -- Mixer Stage
+
+F_IF = 15000;
+F_Oscillator = Fc_BBCAudio + F_IF;
+Oscillator_Signal = cos(2*pi*F_Oscillator*t);
+Mixed_Signal = RF_Filtered_Signal .* Oscillator_Signal;
+
