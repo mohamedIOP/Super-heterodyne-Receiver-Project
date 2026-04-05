@@ -117,7 +117,7 @@ ylabel('Magnitude');
 %% Part V -- Mixer Stage
 
 F_IF = 15000;
-offset = 1000;
+offset = 0;
 F_Oscillator = Fc_BBCAudio + F_IF;
 Oscillator_Signal = 2*cos(2*pi*(F_Oscillator + offset)*t);
 Mixed_Signal = RF_Filtered_Signal .* Oscillator_Signal;
