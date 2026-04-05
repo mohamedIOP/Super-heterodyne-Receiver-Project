@@ -99,12 +99,11 @@ FDM_Signal_Rx = Modulated_FM9090Audio + Modulated_BBCAudio;
 F_RF_low = 85000;
 F_RF_high = 115000;
 %%%% Sharpness of the filter 
-Filter_Order = 8;
+Filter_Order = 20;
 %%%% filter Design 
 RF_Filter_Spec = fdesign.bandpass('N,F3dB1,F3dB2', Filter_Order, F_RF_low, F_RF_high, Common_Fs_After_Interpolation);
 RF_Filter = design(RF_Filter_Spec, 'butter');
 RF_Filtered_Signal = filter(RF_Filter,FDM_Signal_Rx);
-
 %%%% Ploting the result
 RF_Filtered_Signal_FFT = fftshift(fft(RF_Filtered_Signal));
 RF_Filtered_Signal_Length = length(RF_Filtered_Signal);
@@ -118,8 +117,9 @@ ylabel('Magnitude');
 %% Part V -- Mixer Stage
 
 F_IF = 15000;
-F_Oscillator = Fc_BBCAudio - F_IF;
-Oscillator_Signal = 2*cos(2*pi*F_Oscillator*t);
+offset = 1000;
+F_Oscillator = Fc_BBCAudio + F_IF;
+Oscillator_Signal = 2*cos(2*pi*(F_Oscillator + offset)*t);
 Mixed_Signal = RF_Filtered_Signal .* Oscillator_Signal;
 
 %% Part VI -- IF Stage
@@ -164,8 +164,6 @@ xlabel('Frequency (Hz)');
 ylabel('Magnitude');
 %%%% Downsampling
 Final_Audio = downsample(Final_Audio_High_Fs, Interpolation_Factor);
-%%%% Solving losses in power as passing through filters
-Final_Audio = Final_Audio * 2;
 %%%% Ploting the result
 Final_Audio_FFT = fftshift(fft(Final_Audio));
 Final_Audio_Length = length(Final_Audio);
