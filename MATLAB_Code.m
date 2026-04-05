@@ -40,6 +40,7 @@ Short_FM9090Audio_Mono_FFT_Shifted = fftshift(fft(Short_FM9090Audio_Mono));
 
 %%%% Ploting it in the frequency domain
 
+figure(1)
 f = (-max_len_Audio/2 : max_len_Audio/2 - 1) * (Common_Fs/ max_len_Audio);
 subplot(1,2,1);
 plot(f,abs(Short_BBCAudio_Mono_FFT_Shifted));
@@ -87,5 +88,28 @@ Carrier_FM9090Audio = cos(2*pi*Fc_FM9090Audio*t);
 
 Modulated_BBCAudio = Short_BBCAudio_Interp .* Carrier_BBCAudio;
 Modulated_FM9090Audio = Short_FM9090Audio_Interp .* Carrier_FM9090Audio;
-
 disp('AM Modulation Phase Finished');
+
+%% Part IV -- RF Stage
+
+%%%% FDM Creation
+FDM_Signal_Rx = Modulated_FM9090Audio + Modulated_BBCAudio;
+%%%% Specs of filter
+F_low = 85000;
+F_high = 115000;
+%%%% Sharpness of the filter 
+Filter_Order = 10;
+%%%% filter Design 
+RF_Filter_Spec = fdesign.bandpass('N,F3dB1,F3dB2', Filter_Order, F_low, F_high, Common_Fs_After_Interpolation);
+RF_Filter = design(RF_Filter_Spec, 'butter');
+RF_Filtered_Signal = filter(RF_Filter,FDM_Signal_Rx);
+
+%%%% Ploting the result
+RF_Filtered_Signal_FFT = fftshift(fft(RF_Filtered_Signal));
+RF_Filtered_Signal_Length = length(RF_Filtered_Signal);
+f = (-RF_Filtered_Signal_Length/2 : RF_Filtered_Signal_Length/2 - 1) * (Common_Fs_After_Interpolation/ RF_Filtered_Signal_Length);
+figure(2)
+plot(f,abs(RF_Filtered_Signal_FFT));
+title('Frequency Spectrum of RF filtered Signal');
+xlabel('Frequency (Hz)');
+ylabel('Magnitude');
