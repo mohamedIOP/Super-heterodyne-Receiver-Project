@@ -95,12 +95,12 @@ disp('AM Modulation Phase Finished');
 %%%% FDM Creation
 FDM_Signal_Rx = Modulated_FM9090Audio + Modulated_BBCAudio;
 %%%% Specs of filter
-F_low = 85000;
-F_high = 115000;
+F_RF_low = 85000;
+F_RF_high = 115000;
 %%%% Sharpness of the filter 
 Filter_Order = 10;
 %%%% filter Design 
-RF_Filter_Spec = fdesign.bandpass('N,F3dB1,F3dB2', Filter_Order, F_low, F_high, Common_Fs_After_Interpolation);
+RF_Filter_Spec = fdesign.bandpass('N,F3dB1,F3dB2', Filter_Order, F_RF_low, F_RF_high, Common_Fs_After_Interpolation);
 RF_Filter = design(RF_Filter_Spec, 'butter');
 RF_Filtered_Signal = filter(RF_Filter,FDM_Signal_Rx);
 
@@ -121,3 +121,23 @@ F_Oscillator = Fc_BBCAudio + F_IF;
 Oscillator_Signal = cos(2*pi*F_Oscillator*t);
 Mixed_Signal = RF_Filtered_Signal .* Oscillator_Signal;
 
+%% Part VI -- IF Stage
+
+%%%% Specs of filter
+F_IF_low = 500;
+F_IF_high = 30000;
+%%%% Sharpness of the filter 
+Filter_Order = 10;
+%%%% filter Design 
+IF_Filter_Spec = fdesign.bandpass('N,F3dB1,F3dB2', Filter_Order, F_IF_low, F_IF_high, Common_Fs_After_Interpolation);
+IF_Filter = design(IF_Filter_Spec, 'butter');
+IF_Filtered_Signal = filter(IF_Filter,Mixed_Signal);
+%%%% Ploting the result
+IF_Filtered_Signal_FFT = fftshift(fft(IF_Filtered_Signal));
+IF_Filtered_Signal_Length = length(IF_Filtered_Signal);
+f = (-IF_Filtered_Signal_Length/2 : IF_Filtered_Signal_Length/2 - 1) * (Common_Fs_After_Interpolation/ IF_Filtered_Signal_Length);
+figure(3)
+plot(f,abs(IF_Filtered_Signal_FFT));
+title('Frequency Spectrum of IF filtered Signal');
+xlabel('Frequency (Hz)');
+ylabel('Magnitude');
